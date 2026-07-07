@@ -51,6 +51,7 @@ export default function Home() {
 
     function traverse(dirCluster: number, parentColor?: string) {
       try {
+        if (!fs) return;
         const entries = fs.listDir(dirCluster);
         for (const e of entries) {
           if (e.firstCluster === 0) continue;

@@ -23,7 +23,6 @@ export interface DirEntry {
   attributes: number;
   firstCluster: number;
   fileSize: number;
-  fileSize: number;
   isEmpty: boolean;
   isDir: boolean;
 }
@@ -99,7 +98,7 @@ export class FileSystemAPI {
     const attributes = this.disk.view.getUint8(offset + 11);
 
     if (nameBytes[0] === 0x00 || nameBytes[0] === 0xE5) {
-      return { index, name: "", ext: "", attributes: 0, firstCluster: 0, fileSize: 0, isEmpty: true };
+      return { index, name: "", ext: "", attributes: 0, firstCluster: 0, fileSize: 0, isEmpty: true, isDir: false };
     }
 
     const name = new TextDecoder().decode(nameBytes).replace(/\0/g, '').trim();
