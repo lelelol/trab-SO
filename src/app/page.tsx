@@ -55,6 +55,7 @@ export default function Home() {
         const entries = fs.listDir(dirCluster);
         for (const e of entries) {
           if (e.firstCluster === 0) continue;
+          if (e.name === "." || e.name === "..") continue;
 
           const myColor = PALETTE[colorIndex % PALETTE.length];
           colorIndex++;
@@ -118,6 +119,11 @@ export default function Home() {
 
   const handleNavigate = (folder: DirEntry) => {
     if (folder.isDir) {
+      if (folder.name === '.') return;
+      if (folder.name === '..') {
+        handleGoBack();
+        return;
+      }
       setCurrentPath([...currentPath, { name: folder.name, cluster: folder.firstCluster }]);
     }
   };
