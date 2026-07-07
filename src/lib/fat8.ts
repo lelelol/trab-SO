@@ -50,6 +50,10 @@ function normalize83Part(value: string, maxLength: number, label: string): strin
     throw new Error("Filename cannot be empty.");
   }
 
+  // Special FAT directory entries. They are created internally for folders.
+  if (label === "name" && (normalized === "." || normalized === "..")) {
+    return normalized;
+  }
 
   if (normalized.length > maxLength) {
     throw new Error(`Invalid ${label}. FAT8 supports 8.3 names.`);
@@ -369,6 +373,10 @@ export class FileSystemAPI {
     this.setFAT(cluster, FAT_EOF);
     this.disk.writeSector(cluster, new Uint8Array(CLUSTER_SIZE));
 
+    // FAT-style special directory entries.
+    this.writeDirEntry(cluster, 0, ".", "", ATTR_DIRECTORY, cluster, 0);
+    this.writeDirEntry(cluster, 1, "..", "", ATTR_DIRECTORY, dirCluster === 0 ? 0 : dirCluster, 0);
+
     this.writeDirEntry(dirCluster, freeEntryIndex, name, ext, ATTR_DIRECTORY, cluster, 0);
     this.notify();
     return true;
@@ -391,8 +399,12 @@ export class FileSystemAPI {
   }
 
   private deleteEntryByDirEntry(entry: DirEntry, dirCluster: number, shouldNotify: boolean): boolean {
+    if (entry.name === "." || entry.name === "..") {
+      throw new Error("Cannot delete special directory entries.");
+    }
+
     if (entry.isDir && entry.firstCluster !== 0) {
-      const childEntries = this.listDir(entry.firstCluster);
+      const childEntries = this.listDir(entry.firstCluster).filter((child) => child.name !== "." && child.name !== "..");
 
       for (const child of childEntries) {
         this.deleteEntryByDirEntry(child, entry.firstCluster, false);
@@ -489,7 +501,8 @@ export class FileSystemAPI {
     }
 
     // In this FAT8 simulator, subdirectories are intentionally 1 cluster long.
-    // They contain 8 user-visible entries total.
+    // They contain 8 entries total; two are reserved for . and .., leaving 6
+    // user-visible entries.
     return {
       maxEntries: CLUSTER_SIZE / DIR_ENTRY_SIZE,
       baseOffset: dirCluster * CLUSTER_SIZE,
