@@ -406,8 +406,8 @@ export class FileSystemAPI {
     if (entry.isDir && entry.firstCluster !== 0) {
       const childEntries = this.listDir(entry.firstCluster).filter((child) => child.name !== "." && child.name !== "..");
 
-      for (const child of childEntries) {
-        this.deleteEntryByDirEntry(child, entry.firstCluster, false);
+      if (childEntries.length > 0) {
+        throw new Error("Directory is not empty. You must delete its contents first.");
       }
     }
 

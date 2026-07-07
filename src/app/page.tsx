@@ -42,17 +42,26 @@ export default function Home() {
 
     const map: Record<number, { color: string, borderColor?: string, name: string }> = {};
 
-    // Using a more subtle palette to match the dark slate theme, we'll use these as border-colors 
-    // or translucent backgrounds. We use Tailwind-ish colors: Indigo, Rose, Teal, Amber, Fuchsia, Cyan.
+    // Paleta expandida com cores bem distintas para garantir alto contraste visual entre os blocos alocados
     const PALETTE = [
-      "#6366f1", // Indigo
-      "#f43f5e", // Rose
-      "#14b8a6", // Teal
-      "#f59e0b", // Amber
-      "#d946ef", // Fuchsia
-      "#06b6d4", // Cyan
-      "#8b5cf6", // Violet
+      "#ef4444", // Red
+      "#f97316", // Orange
+      "#eab308", // Yellow
+      "#84cc16", // Lime
       "#10b981", // Emerald
+      "#14b8a6", // Teal
+      "#06b6d4", // Cyan
+      "#0ea5e9", // Sky
+      "#3b82f6", // Blue
+      "#6366f1", // Indigo
+      "#8b5cf6", // Violet
+      "#a855f7", // Purple
+      "#d946ef", // Fuchsia
+      "#ec4899", // Pink
+      "#f43f5e", // Rose
+      "#fb923c", // Orange Light
+      "#4ade80", // Green Light
+      "#2dd4bf", // Teal Light
     ];
 
     function traverse(dirCluster: number, parentColor?: string) {
@@ -163,6 +172,16 @@ export default function Home() {
     return baseStyle;
   }
 
+  const getContrastColor = (hex?: string) => {
+    if (!hex) return 'white';
+    const cleanHex = hex.replace('#', '');
+    const r = parseInt(cleanHex.substr(0, 2), 16);
+    const g = parseInt(cleanHex.substr(2, 4), 16);
+    const b = parseInt(cleanHex.substr(4, 6), 16);
+    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    return yiq >= 128 ? '#09090b' : '#ffffff'; // Dark text for bright backgrounds
+  };
+
   const pathString = currentPath.map(p => p.name).join(' / ');
 
   return (
@@ -190,18 +209,37 @@ export default function Home() {
             {files.length === 0 && <li className={styles.fileItem} style={{ border: 'none', background: 'transparent' }}>Directory is empty.</li>}
             {files.map(f => {
               const fullName = `${f.name}${f.ext ? '.' + f.ext : ''}`;
+              const fileColor = clusterMap[f.firstCluster]?.color;
+              const textColor = getContrastColor(fileColor);
+              const isDarkText = textColor === '#09090b';
+              
               return (
-                <li key={f.index} className={styles.fileItem}>
+                <li 
+                  key={f.index} 
+                  className={styles.fileItem}
+                  style={fileColor ? { 
+                    background: fileColor,
+                    color: textColor,
+                    border: `1px solid ${fileColor}`
+                  } : {}}
+                >
                   <div className={styles.fileInfo} onClick={() => handleNavigate(f)}>
                     <span className={styles.fileName}>
                       {f.isDir ? `[DIR]` : `[FILE]`} {f.isDir ? f.name : fullName}
                     </span>
-                    <div className={styles.fileMeta}>
+                    <div className={styles.fileMeta} style={fileColor ? { color: isDarkText ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.8)' } : {}}>
                       {!f.isDir && <span>{f.fileSize / 256} blocks</span>}
                       <span>Cluster: {f.firstCluster}</span>
                     </div>
                   </div>
-                  <button className={styles.btnDelete} onClick={() => handleDeleteFile(f.isDir ? f.name : fullName)}>
+                  <button 
+                    className={styles.btnDelete} 
+                    style={fileColor ? { 
+                      color: textColor, 
+                      borderColor: isDarkText ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.4)' 
+                    } : {}}
+                    onClick={() => handleDeleteFile(f.isDir ? f.name : fullName)}
+                  >
                     Excluir
                   </button>
                 </li>
@@ -250,15 +288,23 @@ export default function Home() {
               <h2>Disk Visualizer (Clusters)</h2>
             </div>
             <div className={styles.grid}>
-              {Array.from({ length: TOTAL_CLUSTERS }).map((_, i) => (
-                <div
-                  key={`disk-${i}`}
-                  className={`${styles.cell} ${fat[i] === FAT_FREE ? styles.cellFree : ''}`}
-                  style={getCellStyle(i)}
-                  title={`Cluster ${i} ${clusterMap[i] ? `(${clusterMap[i].name})` : ''}`}
-                >
-                </div>
-              ))}
+              {Array.from({ length: TOTAL_CLUSTERS }).map((_, i) => {
+                const nextCluster = fat[i];
+                let nextStr = nextCluster.toString();
+                if (nextCluster === FAT_EOF) nextStr = "EOF";
+                else if (nextCluster === FAT_FREE) nextStr = "Livre";
+
+                return (
+                  <div
+                    key={`disk-${i}`}
+                    className={`${styles.cell} ${fat[i] === FAT_FREE ? styles.cellFree : ''}`}
+                    style={getCellStyle(i)}
+                    title={`Cluster ${i} -> Próximo: ${nextStr} ${clusterMap[i] ? `(${clusterMap[i].name})` : ''}`}
+                  >
+                    {i}
+                  </div>
+                );
+              })}
             </div>
             
             <div className={styles.legend}>
