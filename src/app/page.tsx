@@ -161,8 +161,7 @@ export default function Home() {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h1>FAT8 File System Simulator</h1>
-        <p style={{ color: 'var(--text-muted)' }}>A fully functional browser-based simulation demonstrating Sectors, Clusters, and the FAT</p>
+        <h1>Simulador FAT</h1>
       </header>
 
       <div className={styles.dashboard}>
@@ -174,7 +173,7 @@ export default function Home() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', padding: '0.5rem', background: 'var(--bg)', borderRadius: '4px' }}>
             {currentPath.length > 1 && (
               <button onClick={handleGoBack} style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '0.25rem 0.75rem', borderRadius: '4px', cursor: 'pointer' }}>
-                ← Back
+                Voltar
               </button>
             )}
             <span style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{pathString}</span>
@@ -187,7 +186,7 @@ export default function Home() {
               return (
                 <li key={f.index} className={styles.fileItem}>
                   <div style={{ flex: 1, cursor: f.isDir ? 'pointer' : 'default' }} onClick={() => handleNavigate(f)}>
-                    <strong>{f.isDir ? `📁 ${f.name}` : `📄 ${fullName}`}</strong>
+                    <strong>{f.isDir ? `[DIR] ${f.name}` : `[FILE] ${fullName}`}</strong>
                     {!f.isDir && <span> ({f.fileSize / 256} blocks)</span>}
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Start Cluster: {f.firstCluster}</div>
                   </div>
