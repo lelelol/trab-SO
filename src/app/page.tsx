@@ -41,12 +41,18 @@ export default function Home() {
     if (!fs) return {};
 
     const map: Record<number, { color: string, borderColor?: string, name: string }> = {};
-    let colorIndex = 0;
 
+    // Using a more subtle palette to match the dark slate theme, we'll use these as border-colors 
+    // or translucent backgrounds. We use Tailwind-ish colors: Indigo, Rose, Teal, Amber, Fuchsia, Cyan.
     const PALETTE = [
-      "#ef4444", "#f97316", "#eab308", "#84cc16", "#22c55e",
-      "#06b6d4", "#3b82f6", "#6366f1", "#a855f7", "#ec4899",
-      "#f43f5e", "#14b8a6", "#8b5cf6", "#d946ef"
+      "#6366f1", // Indigo
+      "#f43f5e", // Rose
+      "#14b8a6", // Teal
+      "#f59e0b", // Amber
+      "#d946ef", // Fuchsia
+      "#06b6d4", // Cyan
+      "#8b5cf6", // Violet
+      "#10b981", // Emerald
     ];
 
     function traverse(dirCluster: number, parentColor?: string) {
@@ -57,8 +63,7 @@ export default function Home() {
           if (e.firstCluster === 0) continue;
           if (e.name === "." || e.name === "..") continue;
 
-          const myColor = PALETTE[colorIndex % PALETTE.length];
-          colorIndex++;
+          const myColor = PALETTE[e.firstCluster % PALETTE.length];
 
           let current = e.firstCluster;
           let visited = new Set<number>();
@@ -136,21 +141,23 @@ export default function Home() {
 
   const getCellStyle = (clusterIndex: number) => {
     let baseStyle: any = {};
-    if (clusterIndex === 0) return { background: 'var(--accent)', color: 'white' };
-    if (clusterIndex === 1) return { background: '#f59e0b', color: 'white' };
-    if (clusterIndex >= 2 && clusterIndex <= 5) return { background: '#10b981', color: 'white' };
+    if (clusterIndex === 0) return { background: 'rgba(139, 92, 246, 0.15)', color: '#a78bfa', borderColor: 'rgba(139, 92, 246, 0.3)' }; // Boot
+    if (clusterIndex === 1) return { background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', borderColor: 'rgba(245, 158, 11, 0.3)' }; // FAT
+    if (clusterIndex >= 2 && clusterIndex <= 5) return { background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', borderColor: 'rgba(16, 185, 129, 0.3)' }; // Root
 
     if (fat[clusterIndex] !== FAT_FREE) {
       const info = clusterMap[clusterIndex];
       if (info) {
         baseStyle.background = info.color;
         baseStyle.color = 'white';
+        baseStyle.borderColor = info.borderColor || info.color;
         if (info.borderColor) {
-          baseStyle.border = `2px solid ${info.borderColor}`;
+          baseStyle.borderWidth = '2px';
         }
       } else {
         baseStyle.background = 'var(--primary)';
         baseStyle.color = 'white';
+        baseStyle.borderColor = 'var(--border)';
       }
     }
     return baseStyle;
@@ -166,94 +173,107 @@ export default function Home() {
 
       <div className={styles.dashboard}>
         <div className={styles.panel}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
-            <h2 style={{ margin: 0, border: 'none', padding: 0 }}>File Manager</h2>
+          <div className={styles.panelHeader}>
+            <h2>File Manager</h2>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', padding: '0.5rem', background: 'var(--bg)', borderRadius: '4px' }}>
+          <div className={styles.toolbar}>
             {currentPath.length > 1 && (
-              <button onClick={handleGoBack} style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '0.25rem 0.75rem', borderRadius: '4px', cursor: 'pointer' }}>
+              <button onClick={handleGoBack} className={styles.btnBack}>
                 Voltar
               </button>
             )}
-            <span style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{pathString}</span>
+            <span className={styles.pathString}><strong>Path:</strong> {pathString}</span>
           </div>
 
           <ul className={styles.fileList}>
-            {files.length === 0 && <li className={styles.fileItem} style={{ background: 'transparent', padding: '1rem 0' }}>Directory is empty.</li>}
+            {files.length === 0 && <li className={styles.fileItem} style={{ border: 'none', background: 'transparent' }}>Directory is empty.</li>}
             {files.map(f => {
               const fullName = `${f.name}${f.ext ? '.' + f.ext : ''}`;
               return (
                 <li key={f.index} className={styles.fileItem}>
-                  <div style={{ flex: 1, cursor: f.isDir ? 'pointer' : 'default' }} onClick={() => handleNavigate(f)}>
-                    <strong>{f.isDir ? `[DIR] ${f.name}` : `[FILE] ${fullName}`}</strong>
-                    {!f.isDir && <span> ({f.fileSize / 256} blocks)</span>}
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Start Cluster: {f.firstCluster}</div>
+                  <div className={styles.fileInfo} onClick={() => handleNavigate(f)}>
+                    <span className={styles.fileName}>
+                      {f.isDir ? `[DIR]` : `[FILE]`} {f.isDir ? f.name : fullName}
+                    </span>
+                    <div className={styles.fileMeta}>
+                      {!f.isDir && <span>{f.fileSize / 256} blocks</span>}
+                      <span>Cluster: {f.firstCluster}</span>
+                    </div>
                   </div>
-                  <button onClick={() => handleDeleteFile(f.isDir ? f.name : fullName)}>Delete</button>
+                  <button className={styles.btnDelete} onClick={() => handleDeleteFile(f.isDir ? f.name : fullName)}>
+                    Excluir
+                  </button>
                 </li>
               )
             })}
           </ul>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '2rem' }}>
-            <div className={styles.fileForm} style={{ flexDirection: 'column', marginTop: 0 }}>
-              <h3 style={{ fontSize: '1rem', color: 'var(--accent)' }}>Allocate New File</h3>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <input
-                  placeholder="Filename (e.g. data.bin)"
-                  value={newFileName}
-                  onChange={e => setNewFileName(e.target.value)}
-                />
-                <input
-                  type="number"
-                  min="1"
-                  placeholder="Blocks"
-                  value={newFileBlocks}
-                  onChange={e => setNewFileBlocks(e.target.value)}
-                  style={{ maxWidth: '100px' }}
-                />
-              </div>
-              <button onClick={handleCreateFile}>Allocate File</button>
-            </div>
-
-            <div className={styles.fileForm} style={{ flexDirection: 'column', marginTop: 0 }}>
-              <h3 style={{ fontSize: '1rem', color: 'var(--success)' }}>Create New Folder</h3>
+          <div className={styles.formGroup}>
+            <h3>Allocate New File</h3>
+            <div className={styles.inputRow}>
               <input
+                className={`${styles.input} ${styles.inputFlex}`}
+                placeholder="Filename (e.g. data.bin)"
+                value={newFileName}
+                onChange={e => setNewFileName(e.target.value)}
+              />
+              <input
+                type="number"
+                min="1"
+                className={`${styles.input} ${styles.inputSmall}`}
+                placeholder="Blocks"
+                value={newFileBlocks}
+                onChange={e => setNewFileBlocks(e.target.value)}
+              />
+            </div>
+            <button className={styles.btnPrimary} onClick={handleCreateFile}>Allocate File</button>
+          </div>
+
+          <div className={styles.formGroup}>
+            <h3>Create New Folder</h3>
+            <div className={styles.inputRow}>
+              <input
+                className={`${styles.input} ${styles.inputFlex}`}
                 placeholder="Folder Name"
                 value={newFolderName}
                 onChange={e => setNewFolderName(e.target.value)}
               />
-              <button onClick={handleCreateFolder} style={{ background: 'var(--success)' }}>Create Folder</button>
+              <button className={`${styles.btnPrimary} ${styles.btnSuccess}`} onClick={handleCreateFolder}>Create Folder</button>
             </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           <div className={styles.panel}>
-            <h2>Disk Visualizer (Clusters)</h2>
+            <div className={styles.panelHeader}>
+              <h2>Disk Visualizer (Clusters)</h2>
+            </div>
             <div className={styles.grid}>
               {Array.from({ length: TOTAL_CLUSTERS }).map((_, i) => (
                 <div
                   key={`disk-${i}`}
-                  className={styles.cell}
+                  className={`${styles.cell} ${fat[i] === FAT_FREE ? styles.cellFree : ''}`}
                   style={getCellStyle(i)}
                   title={`Cluster ${i} ${clusterMap[i] ? `(${clusterMap[i].name})` : ''}`}
                 >
                 </div>
               ))}
             </div>
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', fontSize: '0.8rem', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><div className={`${styles.cell} ${styles.cellBoot}`} style={{ width: 16, height: 16, border: 'none' }}></div> Boot</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><div className={`${styles.cell} ${styles.cellFat}`} style={{ width: 16, height: 16, border: 'none' }}></div> FAT</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><div className={`${styles.cell} ${styles.cellRoot}`} style={{ width: 16, height: 16, border: 'none' }}></div> Root Dir</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><div className={`${styles.cell} ${styles.cellAllocated}`} style={{ width: 16, height: 16, border: 'none' }}></div> File Data</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><div className={`${styles.cell} ${styles.cellFree}`} style={{ width: 16, height: 16, border: 'none' }}></div> Free</div>
+            
+            <div className={styles.legend}>
+              <div className={styles.legendItem}><div className={`${styles.legendColor} ${styles.cellBoot}`}></div> Boot</div>
+              <div className={styles.legendItem}><div className={`${styles.legendColor} ${styles.cellFat}`}></div> FAT</div>
+              <div className={styles.legendItem}><div className={`${styles.legendColor} ${styles.cellRoot}`}></div> Root Dir</div>
+              <div className={styles.legendItem}><div className={`${styles.legendColor} ${styles.cellAllocated}`}></div> File Data</div>
+              <div className={styles.legendItem}><div className={`${styles.legendColor} ${styles.cellFree}`}></div> Free</div>
             </div>
           </div>
 
           <div className={styles.panel}>
-            <h2>FAT Table</h2>
+            <div className={styles.panelHeader}>
+              <h2>FAT Table</h2>
+            </div>
             <div className={styles.grid}>
               {Array.from(fat).map((val, i) => {
                 let display = val.toString(16).toUpperCase().padStart(2, '0');
@@ -263,7 +283,7 @@ export default function Home() {
                 return (
                   <div
                     key={`fat-${i}`}
-                    className={styles.cell}
+                    className={`${styles.cell} ${fat[i] === FAT_FREE ? styles.cellFree : ''}`}
                     style={getCellStyle(i)}
                     title={`Cluster ${i} -> ${val === FAT_EOF ? 'EOF' : val === FAT_FREE ? 'Free' : val} ${clusterMap[i] ? `(${clusterMap[i].name})` : ''}`}
                   >
@@ -272,7 +292,6 @@ export default function Home() {
                 )
               })}
             </div>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '1rem' }}>Values indicate the next cluster in the chain. FF = End of File. 00 = Free.</p>
           </div>
         </div>
       </div>
