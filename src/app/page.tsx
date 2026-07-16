@@ -99,7 +99,7 @@ export default function Home() {
     return map;
   }, [fs, fat]);
 
-  if (!fs) return <div className={styles.container}>Loading Simulator...</div>;
+  if (!fs) return <div className={styles.container}>Carregando Simulador...</div>;
 
   const handleCreateFile = () => {
     if (!newFileName.trim()) return;
@@ -193,7 +193,7 @@ export default function Home() {
       <div className={styles.dashboard}>
         <div className={styles.panel}>
           <div className={styles.panelHeader}>
-            <h2>File Manager</h2>
+            <h2>Gerenciador de Arquivos</h2>
           </div>
 
           <div className={styles.toolbar}>
@@ -202,11 +202,11 @@ export default function Home() {
                 Voltar
               </button>
             )}
-            <span className={styles.pathString}><strong>Path:</strong> {pathString}</span>
+            <span className={styles.pathString}><strong>Caminho:</strong> {pathString}</span>
           </div>
 
           <ul className={styles.fileList}>
-            {files.length === 0 && <li className={styles.fileItem} style={{ border: 'none', background: 'transparent' }}>Directory is empty.</li>}
+            {files.length === 0 && <li className={styles.fileItem} style={{ border: 'none', background: 'transparent' }}>Diretório vazio.</li>}
             {files.map(f => {
               const fullName = `${f.name}${f.ext ? '.' + f.ext : ''}`;
               const fileColor = clusterMap[f.firstCluster]?.color;
@@ -225,10 +225,10 @@ export default function Home() {
                 >
                   <div className={styles.fileInfo} onClick={() => handleNavigate(f)}>
                     <span className={styles.fileName}>
-                      {f.isDir ? `[DIR]` : `[FILE]`} {f.isDir ? f.name : fullName}
+                      {f.isDir ? `[PASTA]` : `[ARQ]`} {f.isDir ? f.name : fullName}
                     </span>
                     <div className={styles.fileMeta} style={fileColor ? { color: isDarkText ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.8)' } : {}}>
-                      {!f.isDir && <span>{f.fileSize / 256} blocks</span>}
+                      {!f.isDir && <span>{f.fileSize / 256} blocos</span>}
                       <span>Cluster: {f.firstCluster}</span>
                     </div>
                   </div>
@@ -248,11 +248,11 @@ export default function Home() {
           </ul>
 
           <div className={styles.formGroup}>
-            <h3>Allocate New File</h3>
+            <h3>Alocar Novo Arquivo</h3>
             <div className={styles.inputRow}>
               <input
                 className={`${styles.input} ${styles.inputFlex}`}
-                placeholder="Filename (e.g. data.bin)"
+                placeholder="Nome do arquivo (ex: dados.bin)"
                 value={newFileName}
                 onChange={e => setNewFileName(e.target.value)}
               />
@@ -260,24 +260,24 @@ export default function Home() {
                 type="number"
                 min="1"
                 className={`${styles.input} ${styles.inputSmall}`}
-                placeholder="Blocks"
+                placeholder="Blocos"
                 value={newFileBlocks}
                 onChange={e => setNewFileBlocks(e.target.value)}
               />
             </div>
-            <button className={styles.btnPrimary} onClick={handleCreateFile}>Allocate File</button>
+            <button className={styles.btnPrimary} onClick={handleCreateFile}>Alocar Arquivo</button>
           </div>
 
           <div className={styles.formGroup}>
-            <h3>Create New Folder</h3>
+            <h3>Criar Nova Pasta</h3>
             <div className={styles.inputRow}>
               <input
                 className={`${styles.input} ${styles.inputFlex}`}
-                placeholder="Folder Name"
+                placeholder="Nome da pasta"
                 value={newFolderName}
                 onChange={e => setNewFolderName(e.target.value)}
               />
-              <button className={`${styles.btnPrimary} ${styles.btnSuccess}`} onClick={handleCreateFolder}>Create Folder</button>
+              <button className={`${styles.btnPrimary} ${styles.btnSuccess}`} onClick={handleCreateFolder}>Criar Pasta</button>
             </div>
           </div>
         </div>
@@ -285,7 +285,7 @@ export default function Home() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           <div className={styles.panel}>
             <div className={styles.panelHeader}>
-              <h2>Disk Visualizer (Clusters)</h2>
+              <h2>Visualizador de Disco (Clusters)</h2>
             </div>
             <div className={styles.grid}>
               {Array.from({ length: TOTAL_CLUSTERS }).map((_, i) => {
@@ -310,15 +310,15 @@ export default function Home() {
             <div className={styles.legend}>
               <div className={styles.legendItem}><div className={`${styles.legendColor} ${styles.cellBoot}`}></div> Boot</div>
               <div className={styles.legendItem}><div className={`${styles.legendColor} ${styles.cellFat}`}></div> FAT</div>
-              <div className={styles.legendItem}><div className={`${styles.legendColor} ${styles.cellRoot}`}></div> Root Dir</div>
-              <div className={styles.legendItem}><div className={`${styles.legendColor} ${styles.cellAllocated}`}></div> File Data</div>
-              <div className={styles.legendItem}><div className={`${styles.legendColor} ${styles.cellFree}`}></div> Free</div>
+              <div className={styles.legendItem}><div className={`${styles.legendColor} ${styles.cellRoot}`}></div> Dir. Raiz</div>
+              <div className={styles.legendItem}><div className={`${styles.legendColor} ${styles.cellAllocated}`}></div> Dados</div>
+              <div className={styles.legendItem}><div className={`${styles.legendColor} ${styles.cellFree}`}></div> Livre</div>
             </div>
           </div>
 
           <div className={styles.panel}>
             <div className={styles.panelHeader}>
-              <h2>FAT Table</h2>
+              <h2>Tabela FAT</h2>
             </div>
             <div className={styles.grid}>
               {Array.from(fat).map((val, i) => {
@@ -331,7 +331,7 @@ export default function Home() {
                     key={`fat-${i}`}
                     className={`${styles.cell} ${fat[i] === FAT_FREE ? styles.cellFree : ''}`}
                     style={getCellStyle(i)}
-                    title={`Cluster ${i} -> ${val === FAT_EOF ? 'EOF' : val === FAT_FREE ? 'Free' : val} ${clusterMap[i] ? `(${clusterMap[i].name})` : ''}`}
+                    title={`Cluster ${i} -> ${val === FAT_EOF ? 'EOF' : val === FAT_FREE ? 'Livre' : val} ${clusterMap[i] ? `(${clusterMap[i].name})` : ''}`}
                   >
                     {display}
                   </div>
